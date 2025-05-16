@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi‐Dataset Editors</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      :root {
+        --primary: #4361ee;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --info: #4895ef;
+        --warning: #f72585;
+        --danger: #e63946;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gradient-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        --hover-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+        --panel-bg: rgba(255, 255, 255, 0.95);
+        --transition: all 0.3s ease;
+      }
+
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: var(--gradient-bg);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .page-wrapper {
+        position: relative;
+        padding: 2rem;
+      }
+
+      .page-wrapper::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        z-index: -1;
+        opacity: 0.8;
+      }
+
+      .main-title {
+        font-weight: 800;
+        color: var(--dark);
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+        display: inline-block;
+        left: 50%;
+        transform: translateX(-50%);
+        padding-bottom: 0.5rem;
+      }
+
+      .main-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        animation: title-underline 1.5s ease-in-out forwards;
+      }
+
+      @keyframes title-underline {
+        to {
+          width: 100%;
+        }
+      }
+
+      .panel-row {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .panel {
+        flex: 1;
+        border: none;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: var(--card-shadow);
+        background: var(--panel-bg);
+        min-width: 300px;
+        margin-bottom: 1rem;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .panel:hover {
+        box-shadow: var(--hover-shadow);
+        transform: translateY(-5px);
+      }
+
+      .panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary), var(--success));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+      }
+
+      .panel:hover::before {
+        transform: scaleX(1);
+      }
+
+      .panel h2 {
+        margin-top: 0;
+        font-size: 1.5rem;
+        color: var(--dark);
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .panel h2::before {
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+      }
+
+      #panel-pm25 h2::before {
+        content: "\F4E7";
+        font-family: "bootstrap-icons";
+        color: var(--warning);
+      }
+
+      #panel-lst h2::before {
+        content: "\F614";
+        font-family: "bootstrap-icons";
+        color: var(--danger);
+      }
+
+      #panel-esri h2::before {
+        content: "\F2CA";
+        font-family: "bootstrap-icons";
+        color: var(--success);
+      }
+
+      #panel-uhii h2::before {
+        content: "\F5F5";
+        font-family: "bootstrap-icons";
+        color: var(--info);
+      }
+
+      #panel-uhii-pred h2::before {
+        content: "\F5A0";
+        font-family: "bootstrap-icons";
+        color: var(--secondary);
+      }
+
+      .controls .row {
+        margin-bottom: 0.8rem;
+      }
+
+      .controls label {
+        margin-right: 0.5rem;
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.9rem;
+        transition: var(--transition);
+      }
+
+      .form-control,
+      .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #dee2e6;
+        transition: var(--transition);
+        box-shadow: none;
+      }
+
+      .form-control:focus,
+      .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+      }
+
+      .form-control:hover,
+      .form-select:hover {
+        border-color: #adb5bd;
+      }
+
+      .chart {
+        text-align: center;
+        margin-top: 1.5rem;
+        background: #f1f3f4;
+        border-radius: 0.75rem;
+        padding: 0.75rem;
+        min-height: 150px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chart::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .chart.loading::before {
+        opacity: 1;
+        pointer-events: all;
+        content: "Loading...";
+        font-weight: 600;
+        color: var(--primary);
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.8;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 0.8;
+        }
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.5rem;
+        border: 1px solid #dee2e6;
+        background: #fff;
+        transition: var(--transition);
+        transform: scale(0.98);
+      }
+
+      img:not([src=""]) {
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+        z-index: -1;
+      }
+
+      .btn:hover::before {
+        left: 0;
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .btn-primary:hover {
+        background-color: var(--secondary);
+        border-color: var(--secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn-success {
+        background-color: var(--success);
+        border-color: var(--success);
+      }
+
+      .btn-success:hover {
+        background-color: #3db8dc;
+        border-color: #3db8dc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+      }
+
+      #message-area {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        transition: var(--transition);
+        max-height: 0;
+        overflow: hidden;
+        z-index: 9999;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        width: auto;
+        min-width: 300px;
+        max-width: 80%;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #message-area.show {
+        max-height: 100px;
+        opacity: 1;
+        pointer-events: all;
+        background-color: rgba(255, 255, 255, 0.95);
+        border-left: 4px solid var(--primary);
+      }
+
+      .floating-controls {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .floating-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: var(--transition);
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-size: 1.2rem;
+      }
+
+      .floating-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+      }
+
+      .tooltip-inner {
+        background-color: var(--dark);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Simplified controls */
+      .input-group-sm {
+        margin-bottom: 0.5rem;
+      }
+
+      .input-group-text {
+        background-color: var(--light);
+        border-color: #dee2e6;
+        color: #495057;
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+
+      .advanced-options {
+        margin-top: 0.5rem;
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.3s ease;
+      }
+
+      .advanced-options.show {
+        max-height: 300px;
+      }
+
+      .toggle-advanced {
+        background: none;
+        border: none;
+        color: var(--primary);
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between;
+        border-radius: 0.25rem;
+        transition: var(--transition);
+      }
+
+      .toggle-advanced:hover {
+        background-color: rgba(67, 97, 238, 0.1);
+      }
+
+      .toggle-advanced i {
+        transition: transform 0.3s ease;
+      }
+
+      .toggle-advanced.active i {
+        transform: rotate(180deg);
+      }
+
+      .range-slider {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+
+      .range-slider-value {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--primary);
+      }
+
+      .coordinate-inputs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+
+      .coordinate-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+        color: #6c757d;
+      }
+
+      @media (max-width: 900px) {
+        .panel-row {
+          flex-direction: column;
+        }
+
+        .page-wrapper {
+          padding: 1rem;
+        }
+
+        .panel {
+          padding: 1.2rem;
+        }
+      }
+
+      /* Animation for chart loading */
+      @keyframes shimmer {
+        0% {
+          background-position: -1000px 0;
+        }
+        100% {
+          background-position: 1000px 0;
+        }
+      }
+
+      .shimmer {
+        animation: shimmer 2s infinite linear;
+        background: linear-gradient(
+          to right,
+          #f6f7f8 8%,
+          #edeef1 18%,
+          #f6f7f8 33%
+        );
+        background-size: 1000px 100%;
+      }
+
+      /* Fade in animation for panels */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .panel {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+      }
+
+      .panel:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .panel:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .panel:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .panel:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .panel:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #c3cfe2;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #a5b4cb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="container">
+        <h1 class="main-title display-5 mb-4">Multi‐Dataset Editors</h1>
+        <div id="message-area"></div>
+
+        <!-- First row: three panels -->
+        <div class="panel-row">
+          <!-- PM2.5 Panel -->
+          <div class="panel" id="panel-pm25">
+            <h2>PM₂.₅</h2>
+            <div class="controls">
+              <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">Year</span>
+                <input
+                  id="pm_year"
+                  class="form-control"
+                  type="number"
+                  value="2010"
+                  min="2001"
+                  max="2020"
+                />
+                <span class="input-group-text">Month</span>
+                <input
+                  id="pm_month"
+                  class="form-control"
+                  type="number"
+                  value="1"
+                  min="1"
+                  max="12"
+                />
+              </div>
+
+              <div class="d-flex align-items-center mb-3">
+                <label for="pm_factor" class="me-2 mb-0">Factor:</label>
+                <input
+                  type="range"
+                  class="form-range me-2"
+                  id="pm_factor_range"
+                  min="0.2"
+                  max="5.0"
+                  step="0.1"
+                  value="1.0"
+                />
+                <span id="pm_factor_value" class="range-slider-value">1.0</span>
+                <input id="pm_factor" type="hidden" value="1.0" />
+              </div>
+
+              <button class="toggle-advanced" id="pm_toggle_advanced">
+                <span>Advanced Options</span>
+                <i class="bi bi-chevron-down"></i>
+              </button>
+
+              <div class="advanced-options" id="pm_advanced_options">
+                <div class="coordinate-inputs">
+                  <div>
+                    <div class="coordinate-label">x₀</div>
+                    <input
+                      id="pm_x0"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="0"
+                      min="0"
+                      max="42"
+                    />
+                  </div>
+                  <div>
+                    <div class="coordinate-label">x₁</div>
+                    <input
+                      id="pm_x1"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="43"
+                      min="1"
+                      max="43"
+                    />
+                  </div>
+                  <div>
+                    <div class="coordinate-label">y₀</div>
+                    <input
+                      id="pm_y0"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="0"
+                      min="0"
+                      max="40"
+                    />
+                  </div>
+                  <div>
+                    <div class="coordinate-label">y₁</div>
+                    <input
+                      id="pm_y1"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="41"
+                      min="1"
+                      max="41"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid mt-3">
+                <button id="pm_apply" class="btn btn-primary">
+                  <i class="bi bi-graph-up me-1"></i> Apply
+                </button>
+              </div>
+            </div>
+            <div class="chart" id="pm_chart">
+              <img id="pm_img" src="/placeholder.svg" alt="PM₂.₅ plot" />
+            </div>
+          </div>
+
+          <!-- LST Panel -->
+          <div class="panel" id="panel-lst">
+            <h2>LST</h2>
+            <div class="controls">
+              <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">Year</span>
+                <input
+                  id="lst_year"
+                  class="form-control"
+                  type="number"
+                  value="2010"
+                  min="2001"
+                  max="2020"
+                />
+                <span class="input-group-text">Month</span>
+                <input
+                  id="lst_month"
+                  class="form-control"
+                  type="number"
+                  value="1"
+                  min="1"
+                  max="12"
+                />
+              </div>
+
+              <div class="d-flex align-items-center mb-3">
+                <label for="lst_factor" class="me-2 mb-0">Factor:</label>
+                <input
+                  type="range"
+                  class="form-range me-2"
+                  id="lst_factor_range"
+                  min="0.2"
+                  max="5.0"
+                  step="0.1"
+                  value="1.0"
+                />
+                <span id="lst_factor_value" class="range-slider-value"
+                  >1.0</span
+                >
+                <input id="lst_factor" type="hidden" value="1.0" />
+              </div>
+
+              <div class="form-check mb-3">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  id="lst_kelvin"
+                />
+                <label class="form-check-label" for="lst_kelvin"
+                  >Use Kelvin</label
+                >
+              </div>
+
+              <button class="toggle-advanced" id="lst_toggle_advanced">
+                <span>Advanced Options</span>
+                <i class="bi bi-chevron-down"></i>
+              </button>
+
+              <div class="advanced-options" id="lst_advanced_options">
+                <div class="coordinate-inputs">
+                  <div>
+                    <div class="coordinate-label">x₀</div>
+                    <input
+                      id="lst_x0"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="0"
+                      min="0"
+                      max="42"
+                    />
+                  </div>
+                  <div>
+                    <div class="coordinate-label">x₁</div>
+                    <input
+                      id="lst_x1"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="43"
+                      min="1"
+                      max="43"
+                    />
+                  </div>
+                  <div>
+                    <div class="coordinate-label">y₀</div>
+                    <input
+                      id="lst_y0"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="0"
+                      min="0"
+                      max="40"
+                    />
+                  </div>
+                  <div>
+                    <div class="coordinate-label">y₁</div>
+                    <input
+                      id="lst_y1"
+                      class="form-control form-control-sm"
+                      type="number"
+                      value="41"
+                      min="1"
+                      max="41"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-grid mt-3">
+                <button id="lst_apply" class="btn btn-primary">
+                  <i class="bi bi-graph-up me-1"></i> Apply
+                </button>
+              </div>
+            </div>
+            <div class="chart" id="lst_chart">
+              <img id="lst_img" src="/placeholder.svg" alt="LST plot" />
+            </div>
+          </div>
+
+          <!-- Landcover Panel -->
+          <div class="panel" id="panel-esri">
+            <h2>Landcover</h2>
+            <div class="controls">
+              <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">Year</span>
+                <input
+                  id="esri_year"
+                  class="form-control"
+                  type="number"
+                  value="2005"
+                  min="1997"
+                  max="2022"
+                />
+              </div>
+
+              <div class="d-grid">
+                <button id="esri_apply" class="btn btn-primary">
+                  <i class="bi bi-layers me-1"></i> Apply
+                </button>
+              </div>
+            </div>
+            <div class="chart" id="esri_chart">
+              <img id="esri_img" src="/placeholder.svg" alt="Landcover plot" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Second row: UHII panels -->
+        <div class="panel-row">
+          <div class="panel" id="panel-uhii">
+            <h2>UHII</h2>
+            <div class="controls">
+              <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">Year</span>
+                <input
+                  id="uhii_year"
+                  class="form-control"
+                  type="number"
+                  value="2010"
+                  min="2003"
+                  max="2020"
+                />
+                <span class="input-group-text">Month</span>
+                <select id="uhii_month" class="form-select">
+                  <option value="1">Jan</option>
+                  <option value="2">Feb</option>
+                  <option value="3">Mar</option>
+                  <option value="4">Apr</option>
+                  <option value="5">May</option>
+                  <option value="6">Jun</option>
+                  <option value="7">Jul</option>
+                  <option value="8">Aug</option>
+                  <option value="9">Sep</option>
+                  <option value="10">Oct</option>
+                  <option value="11">Nov</option>
+                  <option value="12">Dec</option>
+                </select>
+              </div>
+
+              <div class="d-grid">
+                <button id="uhii_apply" class="btn btn-primary">
+                  <i class="bi bi-thermometer-half me-1"></i> Apply
+                </button>
+              </div>
+            </div>
+            <div class="chart" id="uhii_chart">
+              <img id="uhii_img" src="/placeholder.svg" alt="UHII plot" />
+            </div>
+          </div>
+
+          <!-- Predicted UHII -->
+          <div class="panel" id="panel-uhii-pred">
+            <h2>UHII Predicted</h2>
+            <div class="controls">
+              <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text">Year</span>
+                <input
+                  id="uhii_pred_year"
+                  class="form-control"
+                  type="number"
+                  value="2010"
+                  min="2003"
+                  max="2020"
+                />
+                <span class="input-group-text">Month</span>
+                <select id="uhii_pred_month" class="form-select">
+                  <option value="1">Jan</option>
+                  <option value="2">Feb</option>
+                  <option value="3">Mar</option>
+                  <option value="4">Apr</option>
+                  <option value="5">May</option>
+                  <option value="6">Jun</option>
+                  <option value="7">Jul</option>
+                  <option value="8">Aug</option>
+                  <option value="9">Sep</option>
+                  <option value="10">Oct</option>
+                  <option value="11">Nov</option>
+                  <option value="12">Dec</option>
+                </select>
+              </div>
+
+              <div class="d-grid">
+                <button id="uhii_pred_apply" class="btn btn-success">
+                  <i class="bi bi-cpu me-1"></i> Run Model
+                </button>
+              </div>
+            </div>
+            <div class="chart" id="uhii_pred_chart">
+              <img
+                id="uhii_pred_img"
+                src="/placeholder.svg"
+                alt="Predicted UHII"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating action buttons -->
+      <div class="floating-controls">
+        <button
+          class="floating-btn"
+          id="refresh-all"
+          data-bs-toggle="tooltip"
+          data-bs-placement="left"
+          title="Refresh All Datasets"
+        >
+          <i class="bi bi-arrow-repeat"></i>
+        </button>
+        <button
+          class="floating-btn"
+          id="help-btn"
+          data-bs-toggle="tooltip"
+          data-bs-placement="left"
+          title="Help"
+        >
+          <i class="bi bi-question-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Initialize tooltips
+      var tooltipTriggerList = [].slice.call(
+        document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      );
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+
+      // Advanced options toggle for PM2.5
+      document
+        .getElementById("pm_toggle_advanced")
+        .addEventListener("click", function () {
+          const advancedOptions = document.getElementById(
+            "pm_advanced_options"
+          );
+          const toggleButton = document.getElementById("pm_toggle_advanced");
+
+          if (advancedOptions.classList.contains("show")) {
+            advancedOptions.classList.remove("show");
+            toggleButton.classList.remove("active");
+          } else {
+            advancedOptions.classList.add("show");
+            toggleButton.classList.add("active");
+          }
+        });
+
+      // Advanced options toggle for LST
+      document
+        .getElementById("lst_toggle_advanced")
+        .addEventListener("click", function () {
+          const advancedOptions = document.getElementById(
+            "lst_advanced_options"
+          );
+          const toggleButton = document.getElementById("lst_toggle_advanced");
+
+          if (advancedOptions.classList.contains("show")) {
+            advancedOptions.classList.remove("show");
+            toggleButton.classList.remove("active");
+          } else {
+            advancedOptions.classList.add("show");
+            toggleButton.classList.add("active");
+          }
+        });
+
+      // PM2.5 factor slider
+      document
+        .getElementById("pm_factor_range")
+        .addEventListener("input", function () {
+          const value = parseFloat(this.value).toFixed(1);
+          document.getElementById("pm_factor_value").textContent = value;
+          document.getElementById("pm_factor").value = value;
+        });
+
+      // LST factor slider
+      document
+        .getElementById("lst_factor_range")
+        .addEventListener("input", function () {
+          const value = parseFloat(this.value).toFixed(1);
+          document.getElementById("lst_factor_value").textContent = value;
+          document.getElementById("lst_factor").value = value;
+        });
+
+      // Show loading state
+      function showLoading(chartId) {
+        document.getElementById(chartId).classList.add("loading");
+      }
+
+      // Hide loading state
+      function hideLoading(chartId) {
+        document.getElementById(chartId).classList.remove("loading");
+      }
+
+      // Show message
+      function showMessage(message, type = "info") {
+        const messageArea = document.getElementById("message-area");
+        messageArea.textContent = message;
+        messageArea.className = "show";
+
+        if (type === "error") {
+          messageArea.style.borderLeftColor = "var(--danger)";
+          messageArea.style.backgroundColor = "rgba(230, 57, 70, 0.1)";
+        } else if (type === "success") {
+          messageArea.style.borderLeftColor = "var(--success)";
+          messageArea.style.backgroundColor = "rgba(76, 201, 240, 0.1)";
+        } else {
+          messageArea.style.borderLeftColor = "var(--primary)";
+          messageArea.style.backgroundColor = "rgba(67, 97, 238, 0.1)";
+        }
+
+        setTimeout(() => {
+          messageArea.className = "";
+        }, 3000);
+      }
+
+      // PM2.5 binding
+      document.getElementById("pm_apply").onclick = () => {
+        showLoading("pm_chart");
+        const payload = {
+          dataset: "pm25",
+          year: document.getElementById("pm_year").value,
+          month: document.getElementById("pm_month").value,
+          x0: document.getElementById("pm_x0").value,
+          x1: document.getElementById("pm_x1").value,
+          y0: document.getElementById("pm_y0").value,
+          y1: document.getElementById("pm_y1").value,
+          factor: document.getElementById("pm_factor").value,
+        };
+        axios
+          .post("/plot", payload, { responseType: "blob" })
+          .then((r) => {
+            document.getElementById("pm_img").src = URL.createObjectURL(r.data);
+            hideLoading("pm_chart");
+            showMessage("PM₂.₅ data updated successfully!", "success");
+          })
+          .catch((e) => {
+            hideLoading("pm_chart");
+            showMessage("PM₂.₅ error: " + e, "error");
+          });
+      };
+
+      // LST binding
+      document.getElementById("lst_apply").onclick = () => {
+        showLoading("lst_chart");
+        const payload = {
+          dataset: "lst",
+          year: document.getElementById("lst_year").value,
+          month: document.getElementById("lst_month").value,
+          x0: document.getElementById("lst_x0").value,
+          x1: document.getElementById("lst_x1").value,
+          y0: document.getElementById("lst_y0").value,
+          y1: document.getElementById("lst_y1").value,
+          factor: document.getElementById("lst_factor").value,
+          use_kelvin: document.getElementById("lst_kelvin").checked,
+        };
+        axios
+          .post("/plot", payload, { responseType: "blob" })
+          .then((r) => {
+            document.getElementById("lst_img").src = URL.createObjectURL(
+              r.data
+            );
+            hideLoading("lst_chart");
+            showMessage("LST data updated successfully!", "success");
+          })
+          .catch((e) => {
+            hideLoading("lst_chart");
+            showMessage("LST error: " + e, "error");
+          });
+      };
+
+      // Landcover binding
+      document.getElementById("esri_apply").onclick = () => {
+        showLoading("esri_chart");
+        const year = document.getElementById("esri_year").value;
+        axios
+          .post("/plot_esri", { year }, { responseType: "blob" })
+          .then((r) => {
+            document.getElementById("esri_img").src = URL.createObjectURL(
+              r.data
+            );
+            hideLoading("esri_chart");
+            showMessage("Landcover data updated successfully!", "success");
+          })
+          .catch((e) => {
+            hideLoading("esri_chart");
+            showMessage("Landcover error: " + e, "error");
+          });
+      };
+
+      // UHII binding
+      document.getElementById("uhii_apply").onclick = () => {
+        showLoading("uhii_chart");
+        const year = document.getElementById("uhii_year").value;
+        const month = document.getElementById("uhii_month").value;
+        axios
+          .post("/plot_uhii", { year, month }, { responseType: "blob" })
+          .then((r) => {
+            document.getElementById("uhii_img").src = URL.createObjectURL(
+              r.data
+            );
+            hideLoading("uhii_chart");
+            showMessage("UHII data updated successfully!", "success");
+          })
+          .catch((e) => {
+            hideLoading("uhii_chart");
+            showMessage("UHII error: " + e, "error");
+          });
+      };
+
+      // Predicted binding:
+      document.getElementById("uhii_pred_apply").onclick = () => {
+        showLoading("uhii_pred_chart");
+        const year = document.getElementById("uhii_pred_year").value;
+        const month = document.getElementById("uhii_pred_month").value;
+        axios
+          .post("/plot_uhii_pred", { year, month }, { responseType: "blob" })
+          .then((r) => {
+            document.getElementById("uhii_pred_img").src = URL.createObjectURL(
+              r.data
+            );
+            hideLoading("uhii_pred_chart");
+            showMessage("UHII Prediction completed successfully!", "success");
+          })
+          .catch((e) => {
+            hideLoading("uhii_pred_chart");
+            showMessage("UHII Prediction error: " + e, "error");
+          });
+      };
+
+      // Refresh all button
+      document.getElementById("refresh-all").onclick = () => {
+        // Trigger all apply buttons
+        document.getElementById("pm_apply").click();
+        document.getElementById("lst_apply").click();
+        document.getElementById("esri_apply").click();
+        document.getElementById("uhii_apply").click();
+        document.getElementById("uhii_pred_apply").click();
+
+        showMessage("Refreshing all datasets...", "info");
+      };
+
+      // Help button
+      document.getElementById("help-btn").onclick = () => {
+        showMessage(
+          "This interface allows you to visualize and modify multiple environmental datasets. Use the controls in each panel to adjust parameters and click Apply to update the visualizations.",
+          "info"
+        );
+      };
+
+      // Add input animation
+      const inputs = document.querySelectorAll("input, select");
+      inputs.forEach((input) => {
+        input.addEventListener("focus", () => {
+          const label = input.parentElement.querySelector("label");
+          if (label) {
+            label.style.color = "var(--primary)";
+          }
+        });
+
+        input.addEventListener("blur", () => {
+          const label = input.parentElement.querySelector("label");
+          if (label) {
+            label.style.color = "";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
