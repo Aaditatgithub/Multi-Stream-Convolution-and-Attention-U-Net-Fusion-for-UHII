@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi‐Dataset Editors</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2em;
+    }
+    h1 {
+      margin-bottom: 1em;
+    }
+    /* Flex container for any row of panels */
+    .panel-row {
+      display: flex;
+      gap: 1em;
+      margin-bottom: 1.5em;
+    }
+    .panel {
+      flex: 1;                /* equal width */
+      border: 1px solid #ccc;
+      padding: 1em;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .panel h2 {
+      margin-top: 0;
+    }
+    .controls div {
+      margin: 0.5em 0;
+    }
+    .chart {
+      text-align: center;
+      margin-top: 1em;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- First row: three panels -->
+  <div class="panel-row">
+    <!-- PM2.5 Panel -->
+    <div class="panel" id="panel-pm25">
+      <h2>PM₂.₅</h2>
+      <div class="controls">
+        <div>
+          Year: <input id="pm_year"  type="number" value="2010" min="2001" max="2020">
+          Month: <input id="pm_month" type="number" value="1"    min="1"    max="12">
+        </div>
+        <div>
+          x₀: <input id="pm_x0" type="number" value="0"  min="0"  max="42">
+          x₁: <input id="pm_x1" type="number" value="43" min="1"  max="43">
+        </div>
+        <div>
+          y₀: <input id="pm_y0" type="number" value="0"  min="0"  max="40">
+          y₁: <input id="pm_y1" type="number" value="41" min="1"  max="41">
+        </div>
+        <div>
+          Factor: <input id="pm_factor" type="number" step="0.1" value="1.0" min="0.2" max="5.0">
+        </div>
+        <button id="pm_apply">Apply PM₂.₅</button>
+      </div>
+      <div class="chart">
+        <img id="pm_img" src="" alt="PM₂.₅ plot">
+      </div>
+    </div>
+
+    <!-- LST Panel -->
+    <div class="panel" id="panel-lst">
+      <h2>LST</h2>
+      <div class="controls">
+        <div>
+          Year: <input id="lst_year"   type="number" value="2010" min="2001" max="2020">
+          Month: <input id="lst_month"  type="number" value="1"    min="1"    max="12">
+          &nbsp;&nbsp;
+          <label><input type="checkbox" id="lst_kelvin"> Use Kelvin</label>
+        </div>
+        <div>
+          x₀: <input id="lst_x0" type="number" value="0"  min="0"  max="42">
+          x₁: <input id="lst_x1" type="number" value="43" min="1"  max="43">
+        </div>
+        <div>
+          y₀: <input id="lst_y0" type="number" value="0"  min="0"  max="40">
+          y₁: <input id="lst_y1" type="number" value="41" min="1"  max="41">
+        </div>
+        <div>
+          Factor: <input id="lst_factor" type="number" step="0.1" value="1.0" min="0.2" max="5.0">
+        </div>
+        <button id="lst_apply">Apply LST</button>
+      </div>
+      <div class="chart">
+        <img id="lst_img" src="" alt="LST plot">
+      </div>
+    </div>
+
+    <!-- Landcover Panel -->
+    <div class="panel" id="panel-esri">
+      <h2>Landcover</h2>
+      <div class="controls">
+        <div>
+          Year: <input id="esri_year" type="number" value="2005" min="1997" max="2022">
+        </div>
+        <button id="esri_apply">Apply Landcover</button>
+      </div>
+      <div class="chart">
+        <img id="esri_img" src="" alt="Landcover plot">
+      </div>
+    </div>
+  </div>
+
+  <!-- Second row: UHII only -->
+  <div class="panel-row">
+    <div class="panel" id="panel-uhii">
+      <h2>UHII</h2>
+      <div class="controls">
+        <div>
+          Year:
+          <input id="uhii_year" type="number" value="2010" min="2003" max="2020">
+          Month:
+          <select id="uhii_month">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">May</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Aug</option>
+            <option value="9">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+          </select>
+        </div>
+        <button id="uhii_apply">Apply UHII</button>
+      </div>
+      <div class="chart">
+        <img id="uhii_img" src="" alt="UHII plot">
+      </div>
+    </div>
+
+    <!-- Predicted UHII -->
+    <div class="panel" id="panel-uhii-pred">
+      <h2>UHII Predicted</h2>
+      <div class="controls">
+        Year: <input id="uhii_pred_year" type="number" value="2010" min="2003" max="2020">
+        Month:
+        <select id="uhii_pred_month">
+          <option value="1">Jan</option>
+          <option value="2">Feb</option>
+          <option value="3">Mar</option>
+          <option value="4">Apr</option>
+          <option value="5">May</option>
+          <option value="6">Jun</option>
+          <option value="7">Jul</option>
+          <option value="8">Aug</option>
+          <option value="9">Sep</option>
+          <option value="10">Oct</option>
+          <option value="11">Nov</option>
+          <option value="12">Dec</option>
+        </select>
+        <button id="uhii_pred_apply">Run Model</button>
+      </div>
+      <div class="chart">
+        <img id="uhii_pred_img" src="" alt="Predicted UHII">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // PM2.5 binding
+    document.getElementById('pm_apply').onclick = () => {
+      const payload = {
+        dataset: 'pm25',
+        year:    document.getElementById('pm_year').value,
+        month:   document.getElementById('pm_month').value,
+        x0:      document.getElementById('pm_x0').value,
+        x1:      document.getElementById('pm_x1').value,
+        y0:      document.getElementById('pm_y0').value,
+        y1:      document.getElementById('pm_y1').value,
+        factor:  document.getElementById('pm_factor').value
+      };
+      axios.post('/plot', payload, { responseType: 'blob' })
+           .then(r => document.getElementById('pm_img').src = URL.createObjectURL(r.data))
+           .catch(e => alert('PM₂.₅ error: '+e));
+    };
+
+    // LST binding
+    document.getElementById('lst_apply').onclick = () => {
+      const payload = {
+        dataset:    'lst',
+        year:       document.getElementById('lst_year').value,
+        month:      document.getElementById('lst_month').value,
+        x0:         document.getElementById('lst_x0').value,
+        x1:         document.getElementById('lst_x1').value,
+        y0:         document.getElementById('lst_y0').value,
+        y1:         document.getElementById('lst_y1').value,
+        factor:     document.getElementById('lst_factor').value,
+        use_kelvin: document.getElementById('lst_kelvin').checked
+      };
+      axios.post('/plot', payload, { responseType: 'blob' })
+           .then(r => document.getElementById('lst_img').src = URL.createObjectURL(r.data))
+           .catch(e => alert('LST error: '+e));
+    };
+
+    // Landcover binding
+    document.getElementById('esri_apply').onclick = () => {
+      const year = document.getElementById('esri_year').value;
+      axios.post('/plot_esri', { year }, { responseType: 'blob' })
+           .then(r => document.getElementById('esri_img').src = URL.createObjectURL(r.data))
+           .catch(e => alert('Landcover error: '+e));
+    };
+
+    // UHII binding
+    document.getElementById('uhii_apply').onclick = () => {
+      const year  = document.getElementById('uhii_year').value;
+      const month = document.getElementById('uhii_month').value;
+      axios.post('/plot_uhii', { year, month }, { responseType: 'blob' })
+           .then(r => {
+             document.getElementById('uhii_img').src = URL.createObjectURL(r.data);
+           })
+           .catch(e => alert('UHII error: ' + e));
+    };
+
+    // Predicted binding:
+    document.getElementById('uhii_pred_apply').onclick = () => {
+      const year  = document.getElementById('uhii_pred_year').value;
+      console.log(year);
+      const month = document.getElementById('uhii_pred_month').value;
+      
+      console.log(month);
+      
+      
+      axios.post('/plot_uhii_pred', { year, month }, { responseType: 'blob' })
+           .then(r => document.getElementById('uhii_pred_img').src = URL.createObjectURL(r.data))
+           .catch(e => alert('UHII Pred error: '+e));
+    };
+  </script>
+</body>
+</html>
