@@ -42,6 +42,9 @@ This project develops a deep learning framework to predict Urban Heat Island Int
   - Test MSE: 0.1104 (vs. baseline UNet: 0.185).
 - **Qualitative**:
   - Attention maps highlight urban districts with high impervious surfaces and PM₂.₅ hotspots, aligning with known UHI patterns.
+
+    <img width="1177" height="413" alt="image" src="https://github.com/user-attachments/assets/41c220f6-8909-4790-a212-f50c309ef8b2" />
+
 - **Interpretability**:
   - CBAM attention emphasizes pollution-heat synergies, with blue streaks in attention masks indicating high-influence regions (e.g., urban centers).
 
