@@ -1,1 +1,0 @@
-# Learning Urban Heat Signatures via Coordinated Multi-Stream Convolution and Attention-Based Fusion
