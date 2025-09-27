@@ -1,1 +1,5 @@
+.gitignore
 myenv
+UHINET_FullAblationCode_patched.ipynb
+UHINET_extracted_code.py
+.mypy_cache
